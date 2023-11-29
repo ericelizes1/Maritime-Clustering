@@ -1,4 +1,5 @@
 # maritime-tracking
 
-# set1.csv is the training set
-# set2noVID.csv is the test set
+### Data
+- **Training Set:** set1.csv
+- **Test Set:** set2noVID.csv

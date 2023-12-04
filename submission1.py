@@ -13,18 +13,63 @@ from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
-def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None):
-    # Unsupervised prediction, so training data is unused
-    
-    scaler = StandardScaler()
-    testFeatures = scaler.fit_transform(testFeatures)
-    
-    # Using Gaussian Mixture model for clustering
-    gmm = GaussianMixture(n_components=numVessels, random_state=100)
-    predVessels = gmm.fit_predict(testFeatures)
-    
-    return predVessels
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import silhouette_score
 
+
+def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None, return_bic=False):
+    # Define scaler
+    scaler = StandardScaler()
+    
+    # Define additional hyperparameters for GMM
+    covariance_types = ['full', 'tied', 'diag', 'spherical']
+    init_params_options = ['kmeans', 'random']
+    max_iter_options = [100, 200, 300]
+
+    # Initialize variables for best model and parameters
+    best_gmm = None
+    lowest_bic = np.infty
+    best_params = {}
+
+    # Scale the features
+    scaled_features = scaler.fit_transform(testFeatures)
+
+    # Iterate over GMM hyperparameters
+    for cov_type in covariance_types:
+        for init_param in init_params_options:
+            for max_iter in max_iter_options:
+                gmm = GaussianMixture(n_components=numVessels, 
+                    covariance_type=cov_type, 
+                    init_params=init_param, 
+                    max_iter=max_iter, 
+                    random_state=100)
+                gmm.fit(scaled_features)
+                bic = gmm.bic(scaled_features)
+
+                if bic < lowest_bic:
+                    lowest_bic = bic
+                    best_gmm = gmm
+                    best_params = {
+                        'covariance_type': cov_type,
+                        'init_params': init_param,
+                        'max_iter': max_iter
+                    }
+
+    # Predict using the best GMM model
+    predVessels = best_gmm.predict(scaled_features)
+
+    # Print the best parameters
+    print("Best GMM Parameters:")
+    print(f"Covariance Type: {best_params['covariance_type']}")
+    print(f"Init Params: {best_params['init_params']}")
+    print(f"Max Iterations: {best_params['max_iter']}")
+
+    if return_bic:
+        return predVessels, best_gmm.bic(scaled_features)
+    else:
+        return predVessels
+'''
 def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
     scaler = StandardScaler()
     max_clusters = 30
@@ -47,6 +92,28 @@ def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
     elbow_point = np.argmin(second_derivative) + 2  # +2 because we lose 2 points in two np.diff()
 
     return predictWithK(testFeatures, elbow_point)
+'''
+def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
+    scaler = StandardScaler()
+    testFeatures = scaler.fit_transform(testFeatures)
+
+    max_clusters = 30
+    metrics = []
+
+    # Evaluate each number of clusters
+    for k in range(1, max_clusters + 1):
+        _, bic = predictWithK(testFeatures, k, return_bic=True)
+        metrics.append(bic)
+
+    # Find the elbow point using the BIC
+    first_derivative = np.diff(metrics)
+    second_derivative = np.diff(first_derivative)
+    elbow_point = np.argmin(second_derivative) + 2
+
+    return predictWithK(testFeatures, elbow_point)
+
+    print(f"Best K value: {best_k} with silhouette score: {best_score}")
+    return best_pred
 
 # Run this code only if being used as a script, not being imported
 if __name__ == "__main__":

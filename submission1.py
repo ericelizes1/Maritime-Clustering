@@ -112,9 +112,6 @@ def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
 
     return predictWithK(testFeatures, elbow_point)
 
-    print(f"Best K value: {best_k} with silhouette score: {best_score}")
-    return best_pred
-
 # Run this code only if being used as a script, not being imported
 if __name__ == "__main__":
     

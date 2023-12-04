@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import adjusted_rand_score
 
 from utils import loadData, plotVesselTracks
-from predictVessel import predictWithK, predictWithoutK
+from submission1 import predictWithK, predictWithoutK
 
 #%% Load training and test data. Training data may not necessarily be used.
 testData = loadData('set2.csv')

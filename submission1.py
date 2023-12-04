@@ -9,7 +9,7 @@ number of vessels is not specified, assume 20 vessels.
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import adjusted_rand_score
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 
@@ -25,8 +25,9 @@ def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None)
     
     return predVessels
 
-def predictWithoutK(testFeatures, max_clusters=30):
+def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
     scaler = StandardScaler()
+    max_clusters = 30
     testFeatures = scaler.fit_transform(testFeatures)
 
     sum_of_squared_distances = []

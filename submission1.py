@@ -3,7 +3,7 @@
 Vessel prediction using k-means clustering on standardized features. If the
 number of vessels is not specified, assume 20 vessels.
 
-@author: Kevin S. Xu
+@author: Eric Elizes, Kiara Cleveland
 """
 
 import numpy as np
@@ -11,16 +11,17 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import adjusted_rand_score
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 
-def predictWithK(testFeatures, numVessels, trainFeatures=None, 
-                 trainLabels=None):
+def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None):
     # Unsupervised prediction, so training data is unused
     
     scaler = StandardScaler()
     testFeatures = scaler.fit_transform(testFeatures)
-    km = KMeans(n_clusters=numVessels, init='k-means++', n_init=10, 
-                random_state=100)
-    predVessels = km.fit_predict(testFeatures)
+    
+    # Using Gaussian Mixture model for clustering
+    gmm = GaussianMixture(n_components=numVessels, random_state=100)
+    predVessels = gmm.fit_predict(testFeatures)
     
     return predVessels
 

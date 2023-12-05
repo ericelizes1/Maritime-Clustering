@@ -9,7 +9,7 @@ of approaches using a dynamic k number of clusters.
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import adjusted_rand_score
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, RobustScaler, MinMaxScaler
 from sklearn.metrics import silhouette_score
 from sklearn.cluster import KMeans
 from pyclustering.cluster.xmeans import xmeans
@@ -35,7 +35,8 @@ def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
     # Arbitrarily assume 20 vessels
     return predictWithK(testFeatures, 20, trainFeatures, trainLabels)
 
-def predictWithoutK_Silhouette(testFeatures, max_clusters=30):
+def predictWithoutK_Silhouette(testFeatures, trainFeatures=None, trainLabels=None):
+    max_clusters=30
     scaler = StandardScaler()
     testFeatures = scaler.fit_transform(testFeatures)
 
@@ -50,7 +51,8 @@ def predictWithoutK_Silhouette(testFeatures, max_clusters=30):
     optimal_k = K[silhouette_scores.index(max(silhouette_scores))]
     return predictWithK(testFeatures, optimal_k)
 
-def predictWithoutK_Elbow(testFeatures, max_clusters=30):
+def predictWithoutK_Elbow(testFeatures, trainFeatures=None, trainLabels=None):
+    max_clusters=30
     scaler = StandardScaler()
     testFeatures = scaler.fit_transform(testFeatures)
 

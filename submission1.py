@@ -18,15 +18,10 @@ from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
 
 
-def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None, return_bic=False):
+def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None, return_bic=False, skip_tuning=False):
     # Define scaler
     scaler = StandardScaler()
     
-    # Define additional hyperparameters for GMM
-    covariance_types = ['full', 'tied', 'diag', 'spherical']
-    init_params_options = ['kmeans', 'random']
-    max_iter_options = [100, 200, 300]
-
     # Initialize variables for best model and parameters
     best_gmm = None
     lowest_bic = np.infty
@@ -34,6 +29,24 @@ def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None,
 
     # Scale the features
     scaled_features = scaler.fit_transform(testFeatures)
+
+    # Check if parameter tuning is to be skipped
+    if skip_tuning:
+        # Use GaussianMixture with default settings
+        gmm = GaussianMixture(n_components=numVessels, random_state=100)
+        gmm.fit(scaled_features)
+        predVessels = gmm.predict(scaled_features)
+        bic = gmm.bic(scaled_features)
+
+        if return_bic:
+            return predVessels, bic
+        else:
+            return predVessels
+        
+    # Define additional hyperparameters for GMM
+    covariance_types = ['full', 'tied', 'diag', 'spherical']
+    init_params_options = ['kmeans', 'random']
+    max_iter_options = [100, 200, 300]
 
     # Iterate over GMM hyperparameters
     for cov_type in covariance_types:
@@ -69,30 +82,7 @@ def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None,
         return predVessels, best_gmm.bic(scaled_features)
     else:
         return predVessels
-'''
-def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
-    scaler = StandardScaler()
-    max_clusters = 30
-    testFeatures = scaler.fit_transform(testFeatures)
 
-    sum_of_squared_distances = []
-    K = range(1, max_clusters + 1)
-    for k in K:
-        km = KMeans(n_clusters=k, init='k-means++', n_init=10, random_state=100)
-        km = km.fit(testFeatures)
-        sum_of_squared_distances.append(km.inertia_)
-
-    # Calculate the rate of change (first derivative)
-    first_derivative = np.diff(sum_of_squared_distances)
-
-    # Calculate the second derivative
-    second_derivative = np.diff(first_derivative)
-
-    # The elbow point is where the second derivative is maximum (most negative)
-    elbow_point = np.argmin(second_derivative) + 2  # +2 because we lose 2 points in two np.diff()
-
-    return predictWithK(testFeatures, elbow_point)
-'''
 def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
     scaler = StandardScaler()
     testFeatures = scaler.fit_transform(testFeatures)
@@ -100,9 +90,9 @@ def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
     max_clusters = 30
     metrics = []
 
-    # Evaluate each number of clusters
+    # Evaluate each number of clusters using default settings for GMM
     for k in range(1, max_clusters + 1):
-        _, bic = predictWithK(testFeatures, k, return_bic=True)
+        _, bic = predictWithK(testFeatures, k, return_bic=True, skip_tuning=True)
         metrics.append(bic)
 
     # Find the elbow point using the BIC
@@ -110,6 +100,7 @@ def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
     second_derivative = np.diff(first_derivative)
     elbow_point = np.argmin(second_derivative) + 2
 
+    # Now use predictWithK with parameter tuning
     return predictWithK(testFeatures, elbow_point)
 
 # Run this code only if being used as a script, not being imported

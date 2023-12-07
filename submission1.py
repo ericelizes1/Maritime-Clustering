@@ -18,7 +18,7 @@ from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
 
 
-def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None, return_bic=False, skip_tuning=False):
+def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None):
     # Define scaler
     scaler = StandardScaler()
     
@@ -29,19 +29,6 @@ def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None,
 
     # Scale the features
     scaled_features = scaler.fit_transform(testFeatures)
-
-    # Check if parameter tuning is to be skipped
-    if skip_tuning:
-        # Use GaussianMixture with default settings
-        gmm = GaussianMixture(n_components=numVessels, random_state=100)
-        gmm.fit(scaled_features)
-        predVessels = gmm.predict(scaled_features)
-        bic = gmm.bic(scaled_features)
-
-        if return_bic:
-            return predVessels, bic
-        else:
-            return predVessels
         
     # Define additional hyperparameters for GMM
     covariance_types = ['full', 'tied', 'diag', 'spherical']
@@ -78,10 +65,7 @@ def predictWithK(testFeatures, numVessels, trainFeatures=None, trainLabels=None,
     print(f"Init Params: {best_params['init_params']}")
     print(f"Max Iterations: {best_params['max_iter']}")
 
-    if return_bic:
-        return predVessels, best_gmm.bic(scaled_features)
-    else:
-        return predVessels
+    return predVessels
 
 def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
     scaler = StandardScaler()
@@ -92,7 +76,9 @@ def predictWithoutK(testFeatures, trainFeatures=None, trainLabels=None):
 
     # Evaluate each number of clusters using default settings for GMM
     for k in range(1, max_clusters + 1):
-        _, bic = predictWithK(testFeatures, k, return_bic=True, skip_tuning=True)
+        gmm = GaussianMixture(n_components=k, random_state=100)
+        gmm.fit(testFeatures)
+        bic = gmm.bic(testFeatures)
         metrics.append(bic)
 
     # Find the elbow point using the BIC
